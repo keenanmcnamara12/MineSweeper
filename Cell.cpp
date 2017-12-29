@@ -6,34 +6,36 @@ Cell::Cell() {
 }
 
 int Cell::clicked() {
+  // reveal(_trueState == Cell::Mine);
+ 
   int rc = 0;
-  if (_visibleState != Cell::Flag) {
+  if ((_visibleState != Cell::Flag) && (_visibleState != _trueState)) {
+
     switch (_trueState)
     {
       case Cell::Number:
         _visibleState = Cell::Number;
+        rc += 1;
+        break;
+      case Cell::ShowSolution:
+        rc += 2;
         break;
       case Cell::Mine:
         _trueState = Cell::MineClicked;   // since reveal will set truestate to visible
         _visibleState = Cell::MineClicked;
-        rc = 4;
+        rc += 4;
         break;
       case Cell::Empty:
         _visibleState = Cell::Empty;
-        rc = 8;
-        break;
-      case Cell::ShowSolution:
-        rc = 2;
-        break;
-      case Cell::Face:
-        rc = 16;
+        rc += 8;
         break;
       default:
         break;
-    }
-  
-    updateDisplay();
+    }  
+  } else if (_visibleState == Cell::Face || _visibleState == Cell::FaceLoss || _visibleState == Cell::FaceWin) {
+      rc += 16; 
   }
+  updateDisplay();
   return rc;
 }
 
@@ -60,11 +62,20 @@ int Cell::rightClicked() {
   return rc;
 }
 
-void Cell::reveal() {
-  if (_trueState == Cell::Mine && _visibleState == Cell::Flag) {
+bool Cell::isRevealed() {
+  if (_trueState == _visibleState)
+    return true;
+  return false;
+}
+
+void Cell::reveal(bool mineClicked, bool winner) {
+  if ((_trueState == Cell::Mine && _visibleState == Cell::Flag) || (_trueState == Cell::Mine && winner)) {
       _visibleState = Cell::Mine;
   } else if (_trueState == Cell::Mine) {
       _visibleState = Cell::MineMissed;
+  } else if (mineClicked == true) {
+      _visibleState = Cell::MineClicked;
+      _trueState = Cell::MineClicked;
   } else {
       _visibleState = _trueState;
   }
@@ -151,6 +162,15 @@ void Cell::updateDisplay() {
       break;
     case Cell::MineMissed:
       _sprite.setTexture(*getTexture("MineSweeperImages/MineMissedCell.png"));
+      break;
+    case Cell::Face:
+      _sprite.setTexture(*getTexture("MineSweeperImages/Smiley.png"));
+      break;
+    case Cell::FaceLoss:
+      _sprite.setTexture(*getTexture("MineSweeperImages/SmileyDead.png"));
+      break;
+    case Cell::FaceWin:
+      _sprite.setTexture(*getTexture("MineSweeperImages/SmileyGlasses.png"));
       break;
     default:
       _sprite.setTexture(*getTexture("MineSweeperImages/DefaultCell.png"));

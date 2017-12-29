@@ -25,6 +25,7 @@ sf::Texture* getTexture(std::string);
 class Game {
 	public:
     Game();
+    ~Game();
 	  void Start();
   
   public:
@@ -38,13 +39,15 @@ class Game {
     void drawAllSprites();
     void handleReturnCode(int code, int i, int j);
     void clickNeighborEmpties(int i, int j);
-    void clickNeighborEmptiesRecur(int** visited, int i, int j);
+    void clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, int originJ);
 	 
   private:
 	  GameState _gameState;
 	  sf::RenderWindow _mainWindow;
     int _rows;
     int _cols;
+    int _totalCells;
+    int _cellsRevealed;
     int _mines;
     Cell **_cells;
     Cell _showSolution;

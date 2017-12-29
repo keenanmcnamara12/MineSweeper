@@ -5,13 +5,20 @@ std::map<std::string, sf::Texture*> textureGlobal;
 Game::Game() {
   _rows = 10;
   _cols = 10;
+  _totalCells = _rows * _cols;
+  _cellsRevealed = 0;
   _mines = 10;
-  // TODO - think I'm loading 10x too many cells
   _cells = new Cell*[_rows];
   for (int i = 0; i < _rows; i++) {
     _cells[i] = new Cell[_cols];
   }
   _gameState = Uninitialized;
+}
+
+Game::~Game() {
+  // for (int i = 0; i < _rows; i++)
+  //   delete _cells[i];
+  // delete _cells;
 }
 
 void Game::initializeResources() {
@@ -30,6 +37,9 @@ void Game::initializeResources() {
   getTexture("MineSweeperImages/6Cell.png");
   getTexture("MineSweeperImages/7Cell.png");
   getTexture("MineSweeperImages/8Cell.png");
+  getTexture("MineSweeperImages/Smiley.png");
+  getTexture("MineSweeperImages/SmileyDead.png");
+  getTexture("MineSweeperImages/SmileyGlasses.png");
 }
 
 sf::Texture* getTexture(std::string file) {
@@ -74,12 +84,13 @@ void Game::Start()
   // Initialize reset button
   _showSolution._trueState = Cell::ShowSolution;
   _showSolution._sprite.setPosition(360, 2);
-  _showSolution._sprite.setTexture(*getTexture("MineSweeperImages/DefaultCell.png"));
+  _showSolution.updateDisplay();
 
   // Initialize the face
   _face._trueState = Cell::Face;
+  _face._visibleState = Cell::Face;
   _face._sprite.setPosition(182, 52);
-  _face._sprite.setTexture(*getTexture("MineSweeperImages/DefaultCell.png"));
+  _face.updateDisplay();
 
   // Draw all sprites (OW game loop waits for an event to draw all)
   drawAllSprites();
@@ -171,34 +182,69 @@ void Game::GameLoop()
 }
 
 // 0 - no message back from cell
+// 1 - number cell revealed
 // 2 - show solution
 // 4 - mine was clicked... boom 
 // 8 - empty cell -> also click all neighbor empty cells
+// 16 - reset
+// 
+// Usage - add values from above to create an int. This number will
+// be run through a mask to parse the indidual components
 void Game::handleReturnCode(int rc, int i, int j) {
-  // Show solution or boom
-  if (rc == 2 || rc == 4) {
+  // Empty Cell and neighbors revealed (includes bordering number cells) 
+  if (rc & 8)
+    clickNeighborEmpties(i, j);
+
+  // Number cell revealed 
+  if (rc & 1)
+    _cellsRevealed++;
+  
+  std::cout << "_cellsRevealed = " << _cellsRevealed << "\n";
+  if (_totalCells - _mines == _cellsRevealed) {
+    // Winner!
+    _face._visibleState = Cell::FaceWin;
+    _face._trueState = Cell::FaceWin;
+    _face.updateDisplay();
+    rc += 2;  // we have a winner, leverage "show solution" case to reveal
+  }
+
+  // Show solution (could be force reveal or winner)
+  if (rc & 2) {
     _gameState = Game::Revealed;
     for (int k = 0; k < _rows; k++) {
       for (int m = 0; m < _cols; m++) {
-        _cells[k][m].reveal();
+        _cells[k][m].reveal(false, true);
       } 
     }
   }
+
   // Boom
-  if (rc == 4) {
-      
+  if (rc & 4) {
+    _gameState = Game::Revealed;
+    _face._visibleState = Cell::FaceLoss;
+    _face._trueState = Cell::FaceLoss;    // need to keep in sync for Cell::click to work
+    _face.updateDisplay();
+    for (int k = 0; k < _rows; k++) {
+      for (int m = 0; m < _cols; m++) {
+        _cells[k][m].reveal(false, false);
+      } 
+    }
   }
-  if (rc == 8) {
-    clickNeighborEmpties(i, j);
-  }
-  if (rc == 16) {
+
+  // Restart (not in the game loop to make sure we don't have event hang)
+  if (rc & 16) {
     for (int i = 0; i < _rows; i++) {
       for (int j = 0; j < _cols; j++) {
 	      _cells[i][j].reset();
       } 
     }
     
+    _face._visibleState = Cell::Face;
+    _face._trueState = Cell::Face;    // need to keep in sync for Cell::click to work
+    _face.updateDisplay();
+    
     initializeCells();
+    _cellsRevealed = 0;
 
     _gameState = Game::Playing;
     drawAllSprites();
@@ -216,13 +262,13 @@ void Game::clickNeighborEmpties(int i, int j) {
       visited[k][m] = 0; 
     } 
   }
-  clickNeighborEmptiesRecur(visited, i, j);
+  clickNeighborEmptiesRecur(visited, i, j, i, j);
   for (int k = 0; k < _rows; k++)
     delete visited[k];
   delete visited;
 }
 
-void Game::clickNeighborEmptiesRecur(int** visited, int i, int j) {
+void Game::clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, int originJ) {
   // Base case - off the board
   if (i < 0 || i >= _rows || j < 0 || j >= _cols)
     return;
@@ -230,27 +276,34 @@ void Game::clickNeighborEmptiesRecur(int** visited, int i, int j) {
   // Base case - cell already visited
   if (visited[i][j] == 1)
     return;
+  // Base case - cell already revealed (and not the origin cell)
+  if (_cells[i][j].isRevealed() && !((i == originI) && (j == originJ)))
+    return;
 
   // Mark cell as visited (assuming it's not off limits)
   visited[i][j] = 1;
   
   // Whether it's an empty cell or not we want to make sure it was clicked
-  // becuase we want the borderinging number cells that surround the empty
+  // because we want the bordering number cells that surround the empty
   // grouping to be clicked when an empty region is found.
   _cells[i][j].clicked(); 
+
+  // Increment cells reveal count since we aren't calling to return code
+  // handler to prevent extra recursions
+  _cellsRevealed++;
   
   // Base case - not an empty cell
   if (!_cells[i][j].isEmpty())
     return;
   
-  clickNeighborEmptiesRecur(visited, i-1, j-1);
-  clickNeighborEmptiesRecur(visited, i-1, j);
-  clickNeighborEmptiesRecur(visited, i-1, j+1);
-  clickNeighborEmptiesRecur(visited, i, j-1);
-  clickNeighborEmptiesRecur(visited, i, j+1);
-  clickNeighborEmptiesRecur(visited, i+1, j-1);
-  clickNeighborEmptiesRecur(visited, i+1, j);
-  clickNeighborEmptiesRecur(visited, i+1, j+1);
+  clickNeighborEmptiesRecur(visited, i-1, j-1, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i-1, j, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i-1, j+1, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i, j-1, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i, j+1, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i+1, j-1, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i+1, j, originI, originJ);
+  clickNeighborEmptiesRecur(visited, i+1, j+1, originI, originJ);
 }
 
 void Game::initializeCells() {
@@ -262,7 +315,6 @@ void Game::initializeCells() {
     int j = 0;
     
     // allocate mines at random
-    // TODO - I think bounds are off and we won't always see 10 mines as a result
     while (mineCount > 0) {
       if (std::rand() % cellsSize == 0 && _cells[i][j].isMine() != true) {
         _cells[i][j]._trueState = Cell::Mine;
