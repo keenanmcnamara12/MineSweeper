@@ -8,11 +8,17 @@ Game::Game() {
   _totalCells = _rows * _cols;
   _cellsRevealed = 0;
   _mines = 10;
+  _minesLeft = _mines;
   _cells = new Cell*[_rows];
+  _timerStarted = false;
   for (int i = 0; i < _rows; i++) {
     _cells[i] = new Cell[_cols];
   }
   _gameState = Uninitialized;
+  _mineCountDisplay.setPosition(4.0, 52.0);
+  _mineCountDisplay.setNumber(_minesLeft);
+  _mineCountDisplay.updateDisplay();
+  _timeDisplay.setPosition(326.0,52.0);
 }
 
 Game::~Game() {
@@ -110,6 +116,8 @@ void Game::drawAllSprites() {
   }
   _mainWindow.draw(_showSolution._sprite);
   _mainWindow.draw(_face._sprite);
+  _mineCountDisplay.drawAllSprites(_mainWindow);
+  _timeDisplay.drawAllSprites(_mainWindow);
   _mainWindow.display();
 }
 
@@ -144,12 +152,27 @@ void Game::GameLoop()
               // When you click in the 40 pixels above the top row, even you'll have -12/40 = 0 (for example)
               if (position.y < 100)
                 j = -1;
-              if (i < _rows && i >= 0 && j < _cols && j >= 0)
-                handleReturnCode(_cells[i][j].clicked(), i, j);
-              else if (position.x >= 360 && position.x < 400 && position.y >= 2 && position.y <= 42)
-                handleReturnCode(_showSolution.clicked(), -1, -1);
-              else if (position.x >= 182 && position.x < 222 && position.y >= 52 && position.y <= 92)
-                handleReturnCode(_face.clicked(), -1, -1);
+              if (i < _rows && i >= 0 && j < _cols && j >= 0) {
+                  handleReturnCode(_cells[i][j].clicked(), i, j);
+                  if (!_timerStarted) {
+                    _timerStarted = true;
+                    _timeDisplay.startTimer();
+                  }
+              } else if (position.x >= 360 && position.x < 400 && position.y >= 2 && position.y <= 42) {
+                  handleReturnCode(_showSolution.clicked(), -1, -1);
+                  if (_timerStarted) {
+                    _timerStarted = false;
+                    _timeDisplay.stopTimer();
+                  }
+              } else if (position.x >= 182 && position.x < 222 && position.y >= 52 && position.y <= 92) {
+                  handleReturnCode(_face.clicked(), -1, -1);
+                  if (_timerStarted) {
+                    _timerStarted = false;
+                    _timeDisplay.stopTimer();
+                    _timeDisplay.resetTimer();
+                  }
+                  _timeDisplay.startTimer();
+              }
     				}
             
             // Cyle right click options on cells: Flag > Question > Default...
@@ -158,8 +181,9 @@ void Game::GameLoop()
             	// std::cout << "Right: x = " << position.x << "\ty = " << position.y << "\n";
               int i = (position.x - 2) / 40;
               int j = (position.y - 100) / 40;
-              if (i < _rows && i >= 0 && j < _cols && j >= 0)
+              if (i < _rows && i >= 0 && j < _cols && j >= 0) {
                 handleReturnCode(_cells[i][j].rightClicked(), i, j);
+              }
     				} 
           }
           
@@ -187,19 +211,30 @@ void Game::GameLoop()
 // 4 - mine was clicked... boom 
 // 8 - empty cell -> also click all neighbor empty cells
 // 16 - reset
+// 32 - flag placed
+// 64 - flag removed
 // 
 // Usage - add values from above to create an int. This number will
 // be run through a mask to parse the indidual components
 void Game::handleReturnCode(int rc, int i, int j) {
   // Empty Cell and neighbors revealed (includes bordering number cells) 
-  if (rc & 8)
+  if (rc & 8) {
     clickNeighborEmpties(i, j);
+    if (!_timerStarted) {
+      _timerStarted = true;
+      _timeDisplay.startTimer();
+    }
+  }
 
   // Number cell revealed 
-  if (rc & 1)
+  if (rc & 1) {
     _cellsRevealed++;
+    if (!_timerStarted) {
+      _timerStarted = true;
+      _timeDisplay.startTimer();
+    }
+  }
   
-  std::cout << "_cellsRevealed = " << _cellsRevealed << "\n";
   if (_totalCells - _mines == _cellsRevealed) {
     // Winner!
     _face._visibleState = Cell::FaceWin;
@@ -216,6 +251,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
         _cells[k][m].reveal(false, true);
       } 
     }
+    _timeDisplay.stopTimer();
   }
 
   // Boom
@@ -229,6 +265,8 @@ void Game::handleReturnCode(int rc, int i, int j) {
         _cells[k][m].reveal(false, false);
       } 
     }
+    
+    _timeDisplay.stopTimer();
   }
 
   // Restart (not in the game loop to make sure we don't have event hang)
@@ -242,6 +280,11 @@ void Game::handleReturnCode(int rc, int i, int j) {
     _face._visibleState = Cell::Face;
     _face._trueState = Cell::Face;    // need to keep in sync for Cell::click to work
     _face.updateDisplay();
+
+    _minesLeft = _mines;
+    _mineCountDisplay.setNumber(_minesLeft);
+    
+    _timeDisplay.resetTimer();
     
     initializeCells();
     _cellsRevealed = 0;
@@ -249,6 +292,18 @@ void Game::handleReturnCode(int rc, int i, int j) {
     _gameState = Game::Playing;
     drawAllSprites();
   }
+  
+  // Flag paced
+  if (rc & 32) {
+    _minesLeft--;
+    _mineCountDisplay.setNumber(_minesLeft);
+  }
+
+  // Flag removed
+  if (rc & 64) {
+    _minesLeft++;
+    _mineCountDisplay.setNumber(_minesLeft);
+  } 
 }
 
 void Game::clickNeighborEmpties(int i, int j) {
@@ -276,6 +331,7 @@ void Game::clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, i
   // Base case - cell already visited
   if (visited[i][j] == 1)
     return;
+  
   // Base case - cell already revealed (and not the origin cell)
   if (_cells[i][j].isRevealed() && !((i == originI) && (j == originJ)))
     return;

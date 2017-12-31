@@ -13,8 +13,8 @@
 #include <sstream>
 #include <ctime>
 #include <string>
-#include "ResourceManager.h"
 #include "Cell.h"
+#include "Score.h"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -49,9 +49,13 @@ class Game {
     int _totalCells;
     int _cellsRevealed;
     int _mines;
+    int _minesLeft;
     Cell **_cells;
     Cell _showSolution;
     Cell _face;
+    Score _mineCountDisplay;
+    Score _timeDisplay;
+    bool _timerStarted;
 };
 
 #endif // GAME_H

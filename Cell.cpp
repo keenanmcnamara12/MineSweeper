@@ -45,9 +45,11 @@ int Cell::rightClicked() {
   {
     case Cell::Default:
       _visibleState = Cell::Flag;
+      rc += 32;
       break;
     case Cell::Flag:
       _visibleState = Cell::Question;
+      rc += 64;
       break;
     case Cell::Question:
       _visibleState = Cell::Default;

@@ -1,7 +1,7 @@
 all: Game
 
-Game: Game.o Cell.o ResourceManager.o
-	g++ -o Game Game.o Cell.o ResourceManager.o -lsfml-graphics -lsfml-window -lsfml-system -Werror -Wall
+Game: Game.o Cell.o Score.o
+	g++ -o Game Game.o Cell.o Score.o -lsfml-graphics -lsfml-window -lsfml-system -Werror -Wall
 
 Game.o: Game.cpp Game.h
 	g++ -c Game.cpp -Werror -Wall
@@ -9,5 +9,5 @@ Game.o: Game.cpp Game.h
 Cell.o: Cell.cpp Cell.h
 	g++ -c Cell.cpp -Werror -Wall
 
-ResourceManager.o: ResourceManager.cpp ResourceManager.h
-	g++ -c ResourceManager.cpp -Werror -Wall
+Score.o: Score.cpp Score.h
+	g++ -c Score.cpp -Werror -Wall
