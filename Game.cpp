@@ -153,7 +153,7 @@ void Game::GameLoop()
               // When you click in the 40 pixels above the top row, even you'll have -12/40 = 0 (for example)
               if (position.y < 100)
                 j = -1;
-              if (i < _rows && i >= 0 && j < _cols && j >= 0) {
+              if (validRowColIndex(i, j)) {
                   handleReturnCode(_cells[i][j].clicked(), i, j);
               } else if (position.x >= 360 && position.x < 400 && position.y >= 2 && position.y <= 42) { 
                   handleReturnCode(_showSolution.clicked(), -1, -1);
@@ -306,7 +306,7 @@ void Game::clickNeighborEmpties(int i, int j) {
 
 void Game::clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, int originJ) {
   // Base case - off the board
-  if (i < 0 || i >= _rows || j < 0 || j >= _cols)
+  if (!validRowColIndex(i, j))
     return;
   
   // Base case - cell already visited
@@ -343,6 +343,18 @@ void Game::clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, i
   clickNeighborEmptiesRecur(visited, i+1, j+1, originI, originJ);
 }
 
+bool Game::validRowColIndex(int i, int j) {
+  if (i < _rows && i >= 0 && j < _cols && j >= 0)
+    return true;
+  return false;
+}
+
+int Game::isMineWrapper(int i, int j) {
+  if (!validRowColIndex(i, j))
+    return 0;
+  return _cells[i][j].isMine();
+}
+
 void Game::initializeCells() {
     srand(time(NULL));
 
@@ -367,163 +379,23 @@ void Game::initializeCells() {
           j++; 
       }
     }
-   
-    // Initialize all the number cells (either number or empty)
-    // initialize inner cells
+
     int surroundingMineCount;
-    for (int i = 1; i < _rows - 1; i++) {
-      for (int j = 1; j < _cols - 1; j++) {
-        if (!_cells[i][j].isMine()) {
-          surroundingMineCount = 0;
-          if (_cells[i-1][j-1].isMine())
-            surroundingMineCount++;
-          if (_cells[i][j-1].isMine())
-            surroundingMineCount++;
-          if (_cells[i+1][j-1].isMine())
-            surroundingMineCount++;
-          if (_cells[i-1][j].isMine())
-            surroundingMineCount++;
-          if (_cells[i+1][j].isMine())
-            surroundingMineCount++;
-          if (_cells[i-1][j+1].isMine())
-            surroundingMineCount++;
-          if (_cells[i][j+1].isMine())
-            surroundingMineCount++;
-          if (_cells[i+1][j+1].isMine())
-            surroundingMineCount++;
-          
-          _cells[i][j].setSurroundingMineCount(surroundingMineCount);
-        }
-      }
-    }
-    
-    // Four corners
-    // Upper Left
-    if (!_cells[0][0].isMine()) {
-      surroundingMineCount = 0;
-      if (_cells[0][1].isMine()) 
-        surroundingMineCount++; 
-      if (_cells[1][0].isMine())
-        surroundingMineCount++;
-      if (_cells[1][1].isMine())
-        surroundingMineCount++;
-      
-      _cells[0][0].setSurroundingMineCount(surroundingMineCount);
-    }
-
-    // Upper right
-    if (!_cells[0][_cols-1].isMine()) {
-      surroundingMineCount = 0;
-      if (_cells[0][_cols-2].isMine())
-        surroundingMineCount++;
-      if (_cells[1][_cols-2].isMine())
-        surroundingMineCount++;
-      if (_cells[1][_cols-1].isMine())
-        surroundingMineCount++;
-      
-      _cells[0][_cols-1].setSurroundingMineCount(surroundingMineCount);
-    }
-
-    // Lower left 
-    if (!_cells[_rows-1][0].isMine()) {
-      surroundingMineCount = 0;
-      if (_cells[_rows-2][0].isMine())
-        surroundingMineCount++;
-      if (_cells[_rows-2][1].isMine())
-        surroundingMineCount++;
-      if (_cells[_rows-1][1].isMine())
-        surroundingMineCount++;
-      
-      _cells[_rows-1][0].setSurroundingMineCount(surroundingMineCount);
-    }
-
-    // Lower Right 
-    if (!_cells[_rows-1][_cols-1].isMine()) {
-      surroundingMineCount = 0;
-      if (_cells[_rows-2][_cols-1].isMine())
-        surroundingMineCount++;
-      if (_cells[_rows-2][_cols-2].isMine())
-        surroundingMineCount++;
-      if (_cells[_rows-1][_cols-2].isMine())
-        surroundingMineCount++;
-      
-      _cells[_rows-1][_cols-1].setSurroundingMineCount(surroundingMineCount);
-    }
-
-    // Left column
-    for (int i = 1; i < _rows-1; i++) {
-      if (!_cells[i][0].isMine()) {
+    for (int i = 0; i < _rows; i++) {
+      for (int j = 0; j < _cols; j++) {
+        if (_cells[i][j].isMine())
+          continue;
         surroundingMineCount = 0;
-        if (_cells[i-1][0].isMine())
-          surroundingMineCount++;
-        if (_cells[i+1][0].isMine())
-          surroundingMineCount++;
-        if (_cells[i-1][1].isMine())
-          surroundingMineCount++;
-        if (_cells[i][1].isMine())
-          surroundingMineCount++;
-        if (_cells[i+1][1].isMine())
-          surroundingMineCount++;
-        
-        _cells[i][0].setSurroundingMineCount(surroundingMineCount);
-      }
-    }
-    
-    // Right Column
-    for (int i = 1; i < _rows-1; i++) {
-      if (!_cells[i][_cols-1].isMine()) {
-        surroundingMineCount = 0;
-        if (_cells[i-1][_cols-1].isMine())
-          surroundingMineCount++;
-        if (_cells[i+1][_cols-1].isMine())
-          surroundingMineCount++;
-        if (_cells[i-1][_cols-2].isMine())
-          surroundingMineCount++;
-        if (_cells[i][_cols-2].isMine())
-          surroundingMineCount++;
-        if (_cells[i+1][_cols-2].isMine())
-          surroundingMineCount++;
-        
-        _cells[i][_cols-1].setSurroundingMineCount(surroundingMineCount);
-      }
-    }
-
-    // Top row
-    for (int j = 1; j < _cols-1; j++) {
-      if (!_cells[0][j].isMine()) {
-        surroundingMineCount = 0;
-        if (_cells[0][j-1].isMine())
-          surroundingMineCount++;
-        if (_cells[0][j+1].isMine())
-          surroundingMineCount++;
-        if (_cells[1][j-1].isMine())
-          surroundingMineCount++;
-        if (_cells[1][j].isMine())
-          surroundingMineCount++;
-        if (_cells[1][j+1].isMine())
-          surroundingMineCount++;
-        
-        _cells[0][j].setSurroundingMineCount(surroundingMineCount);
-      }
-    }
-
-    // Bottom row
-    for (int j = 1; j < _cols-1; j++) {
-      if (!_cells[_rows-1][j].isMine()) {
-        surroundingMineCount = 0;
-        if (_cells[_rows-1][j-1].isMine())
-          surroundingMineCount++;
-        if (_cells[_rows-1][j+1].isMine())
-          surroundingMineCount++;
-        if (_cells[_rows-2][j-1].isMine())
-          surroundingMineCount++;
-        if (_cells[_rows-2][j].isMine())
-          surroundingMineCount++;
-        if (_cells[_rows-2][j+1].isMine())
-          surroundingMineCount++;
-        
-        _cells[_rows-1][j].setSurroundingMineCount(surroundingMineCount);
-      }
+        surroundingMineCount += isMineWrapper(i - 1, j - 1);
+        surroundingMineCount += isMineWrapper(i - 1, j);
+        surroundingMineCount += isMineWrapper(i - 1, j + 1);
+        surroundingMineCount += isMineWrapper(i, j - 1);
+        surroundingMineCount += isMineWrapper(i, j + 1);
+        surroundingMineCount += isMineWrapper(i + 1, j - 1);
+        surroundingMineCount += isMineWrapper(i + 1, j);
+        surroundingMineCount += isMineWrapper(i + 1, j + 1);
+        _cells[i][j].setSurroundingMineCount(surroundingMineCount);
+      } 
     }
 }
 

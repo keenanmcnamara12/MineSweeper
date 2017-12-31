@@ -40,6 +40,8 @@ class Game {
     void handleReturnCode(int code, int i, int j);
     void clickNeighborEmpties(int i, int j);
     void clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, int originJ);
+    bool validRowColIndex(int i, int j);
+    int isMineWrapper(int i, int j);
 	 
   private:
 	  GameState _gameState;
