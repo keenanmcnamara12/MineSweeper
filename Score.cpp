@@ -19,6 +19,8 @@ void Score::setPosition(float x, float y) {
 }
     
 void Score::setNumber(int number) {
+  if (number > 999)
+    _number = 999;
   _number = number;
   updateDisplay();
 }
@@ -37,8 +39,10 @@ void Score::stopTimer() {
 }
 
 void Score::resetTimer() {
-  _timerMode = true;
-  startTimer();
+  // forcing to show zeros by using the number mode (basically the newly create obj state)
+  _timerMode = false;
+  _number = 0;
+  _timerStopped = true;
 }
 
 void Score::updateDisplay() {
@@ -60,7 +64,11 @@ void Score::drawAllSprites(sf::RenderWindow& window) {
 }
 
 long Score::timePassed() {
+  long result;
   if (_timerStopped)
-    return floor((_tEnd - _tStart) / (double) CLOCKS_PER_SEC);
-  return  floor((std::clock() - _tStart) / (double) CLOCKS_PER_SEC);
+    result = floor((_tEnd - _tStart) / (double) CLOCKS_PER_SEC);
+  result = floor((std::clock() - _tStart) / (double) CLOCKS_PER_SEC);
+  if (result > 999)
+    result = 999;
+  return result;
 }

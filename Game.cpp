@@ -213,7 +213,7 @@ void Game::GameLoop()
 // 16 - reset
 // 32 - flag placed
 // 64 - flag removed
-// 
+//
 // Usage - add values from above to create an int. This number will
 // be run through a mask to parse the indidual components
 void Game::handleReturnCode(int rc, int i, int j) {
@@ -283,7 +283,8 @@ void Game::handleReturnCode(int rc, int i, int j) {
 
     _minesLeft = _mines;
     _mineCountDisplay.setNumber(_minesLeft);
-    
+  
+    _timerStarted = false;
     _timeDisplay.resetTimer();
     
     initializeCells();
