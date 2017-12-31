@@ -2,7 +2,7 @@
 
 Score::Score() {
   _number = 0;
-  _timerMode = false;
+  _timerRunning = false;
   _timerStopped = true;
   _text.setString("000");
   _text.setCharacterSize(38);
@@ -26,27 +26,32 @@ void Score::setNumber(int number) {
 }
 
 void Score::startTimer() {
-  _timerMode = true;
-  _timerStopped = false;
-  _tStart = std::clock();
-  updateDisplay();
+  // Only start if the timer hasn't been started
+  if (!_timerRunning) {
+    _timerRunning = true;
+    _timerStopped = false;
+    _tStart = std::clock();
+    updateDisplay();
+  }
 }
 
 void Score::stopTimer() {
-  _timerMode = true;
-  _timerStopped = true;
-  _tEnd = std::clock();
+  // Only set the end if start has been called
+  if (_timerRunning) {
+    _timerStopped = true;
+    _tEnd = std::clock();
+  }
 }
 
 void Score::resetTimer() {
   // forcing to show zeros by using the number mode (basically the newly create obj state)
-  _timerMode = false;
+  _timerRunning = false;
   _number = 0;
   _timerStopped = true;
 }
 
 void Score::updateDisplay() {
-  if (_timerMode == false) {
+  if (_timerRunning == false) {
       std::ostringstream sstream;
       sstream << setfill('0') << setw(3) << _number;
       _text.setString(sstream.str());
@@ -67,7 +72,8 @@ long Score::timePassed() {
   long result;
   if (_timerStopped)
     result = floor((_tEnd - _tStart) / (double) CLOCKS_PER_SEC);
-  result = floor((std::clock() - _tStart) / (double) CLOCKS_PER_SEC);
+  else 
+    result = floor((std::clock() - _tStart) / (double) CLOCKS_PER_SEC);
   if (result > 999)
     result = 999;
   return result;

@@ -55,7 +55,6 @@ class Game {
     Cell _face;
     Score _mineCountDisplay;
     Score _timeDisplay;
-    bool _timerStarted;
 };
 
 #endif // GAME_H

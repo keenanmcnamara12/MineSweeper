@@ -10,7 +10,6 @@ Game::Game() {
   _mines = 10;
   _minesLeft = _mines;
   _cells = new Cell*[_rows];
-  _timerStarted = false;
   for (int i = 0; i < _rows; i++) {
     _cells[i] = new Cell[_cols];
   }
@@ -131,6 +130,8 @@ bool Game::IsExiting()
 
 void Game::GameLoop()
 {
+  // making sure timer works even without events (also gets updated with the rest of sprites)
+  drawAllSprites();
   
   sf::Event currentEvent;
   while(_mainWindow.pollEvent(currentEvent))
@@ -154,24 +155,10 @@ void Game::GameLoop()
                 j = -1;
               if (i < _rows && i >= 0 && j < _cols && j >= 0) {
                   handleReturnCode(_cells[i][j].clicked(), i, j);
-                  if (!_timerStarted) {
-                    _timerStarted = true;
-                    _timeDisplay.startTimer();
-                  }
-              } else if (position.x >= 360 && position.x < 400 && position.y >= 2 && position.y <= 42) {
+              } else if (position.x >= 360 && position.x < 400 && position.y >= 2 && position.y <= 42) { 
                   handleReturnCode(_showSolution.clicked(), -1, -1);
-                  if (_timerStarted) {
-                    _timerStarted = false;
-                    _timeDisplay.stopTimer();
-                  }
               } else if (position.x >= 182 && position.x < 222 && position.y >= 52 && position.y <= 92) {
                   handleReturnCode(_face.clicked(), -1, -1);
-                  if (_timerStarted) {
-                    _timerStarted = false;
-                    _timeDisplay.stopTimer();
-                    _timeDisplay.resetTimer();
-                  }
-                  _timeDisplay.startTimer();
               }
     				}
             
@@ -181,9 +168,8 @@ void Game::GameLoop()
             	// std::cout << "Right: x = " << position.x << "\ty = " << position.y << "\n";
               int i = (position.x - 2) / 40;
               int j = (position.y - 100) / 40;
-              if (i < _rows && i >= 0 && j < _cols && j >= 0) {
+              if (i < _rows && i >= 0 && j < _cols && j >= 0)
                 handleReturnCode(_cells[i][j].rightClicked(), i, j);
-              }
     				} 
           }
           
@@ -220,19 +206,13 @@ void Game::handleReturnCode(int rc, int i, int j) {
   // Empty Cell and neighbors revealed (includes bordering number cells) 
   if (rc & 8) {
     clickNeighborEmpties(i, j);
-    if (!_timerStarted) {
-      _timerStarted = true;
-      _timeDisplay.startTimer();
-    }
+    _timeDisplay.startTimer();
   }
 
   // Number cell revealed 
   if (rc & 1) {
     _cellsRevealed++;
-    if (!_timerStarted) {
-      _timerStarted = true;
-      _timeDisplay.startTimer();
-    }
+    _timeDisplay.startTimer();
   }
   
   if (_totalCells - _mines == _cellsRevealed) {
@@ -284,7 +264,6 @@ void Game::handleReturnCode(int rc, int i, int j) {
     _minesLeft = _mines;
     _mineCountDisplay.setNumber(_minesLeft);
   
-    _timerStarted = false;
     _timeDisplay.resetTimer();
     
     initializeCells();
@@ -298,6 +277,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
   if (rc & 32) {
     _minesLeft--;
     _mineCountDisplay.setNumber(_minesLeft);
+    _timeDisplay.startTimer();
   }
 
   // Flag removed

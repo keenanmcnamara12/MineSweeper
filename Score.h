@@ -24,7 +24,7 @@ class Score {
 
   private:
     double _number;
-    bool _timerMode;
+    bool _timerRunning;
     bool _timerStopped;
     clock_t _tStart;
     clock_t _tEnd;
