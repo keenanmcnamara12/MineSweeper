@@ -15,12 +15,12 @@
 #include <string>
 #include "Cell.h"
 #include "Score.h"
+#include "Textures.h"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
 using namespace std;
-sf::Texture* getTexture(std::string);
 
 class Game {
 	public:
