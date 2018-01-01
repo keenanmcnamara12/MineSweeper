@@ -68,14 +68,11 @@ bool Cell::isRevealed() {
   return false;
 }
 
-void Cell::reveal(bool mineClicked, bool winner) {
+void Cell::reveal(bool winner) {
   if ((_trueState == Cell::Mine && _visibleState == Cell::Flag) || (_trueState == Cell::Mine && winner)) {
       _visibleState = Cell::Mine;
   } else if (_trueState == Cell::Mine) {
       _visibleState = Cell::MineMissed;
-  } else if (mineClicked == true) {
-      _visibleState = Cell::MineClicked;
-      _trueState = Cell::MineClicked;
   } else {
       _visibleState = _trueState;
   }

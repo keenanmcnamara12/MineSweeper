@@ -12,7 +12,7 @@ class Cell {
     bool isMine();
     bool isEmpty();
     void setSurroundingMineCount(int count);
-    void reveal(bool mineClicked, bool winner);
+    void reveal(bool winner);
     void reset();
     bool isRevealed();
     void setPosition(int x, int y);
