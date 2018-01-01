@@ -112,6 +112,46 @@ void Cell::setSurroundingMineCount(int count) {
   }
 }
 
+void Cell::setPosition(int x, int y) {
+  _sprite.setPosition(x, y);
+}
+
+void Cell::initMine() {
+  _trueState = Cell::Mine;
+}
+
+void Cell::initFace() {
+  _trueState = Cell::Face;
+  _visibleState = Cell::Face;
+}
+
+void Cell::initShowSolution() {
+  _trueState = Cell::ShowSolution;
+}
+
+void Cell::drawAllSprites(sf::RenderWindow& window) {
+  updateDisplay();
+  window.draw(_sprite);
+}
+
+void Cell::faceWin() {
+  _visibleState = Cell::FaceWin;
+  _trueState = Cell::FaceWin;
+  updateDisplay();
+}
+
+void Cell::faceLoss() {
+  _visibleState = Cell::FaceLoss;
+  _trueState = Cell::FaceLoss;    // need to keep in sync for Cell::click to work
+  updateDisplay();
+}
+
+void Cell::faceReset() {
+  _visibleState = Cell::Face;
+  _trueState = Cell::Face;    // need to keep in sync for Cell::click to work
+  updateDisplay();
+}
+
 void Cell::updateDisplay() {
   switch (_visibleState)
   {

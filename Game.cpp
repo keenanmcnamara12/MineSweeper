@@ -23,7 +23,6 @@ Game::Game() {
 Game::~Game() {
   // for (int i = 0; i < _rows; i++)
   //   delete _cells[i];
-  // delete _cells;
 }
 
 void Game::initializeResources() {
@@ -83,18 +82,18 @@ void Game::Start()
   // Initialize cells (display)
   for (int i = 0; i < _rows; i++) {
     for (int j = 0; j < _cols; j++) {
-	    _cells[i][j]._sprite.setPosition(i*40 + 2, j*40 + 100);	 // upper left corner
+	    _cells[i][j].setPosition(i*40 + 2, j*40 + 100);	 // upper left corner
     } 
   }
+
   // Initialize reset button
-  _showSolution._trueState = Cell::ShowSolution;
-  _showSolution._sprite.setPosition(360, 2);
+  _showSolution.initShowSolution();
+  _showSolution.setPosition(360, 2);
   _showSolution.updateDisplay();
 
   // Initialize the face
-  _face._trueState = Cell::Face;
-  _face._visibleState = Cell::Face;
-  _face._sprite.setPosition(182, 52);
+  _face.initFace();
+  _face.setPosition(182, 52);
   _face.updateDisplay();
 
   // Draw all sprites (OW game loop waits for an event to draw all)
@@ -110,11 +109,11 @@ void Game::drawAllSprites() {
   _mainWindow.clear(sf::Color(220,220,220));  // grey
   for (int i = 0; i < _rows; i++) {
     for (int j = 0; j < _cols; j++) {
-      _mainWindow.draw(_cells[i][j]._sprite);
+      _cells[i][j].drawAllSprites(_mainWindow);
     } 
   }
-  _mainWindow.draw(_showSolution._sprite);
-  _mainWindow.draw(_face._sprite);
+  _showSolution.drawAllSprites(_mainWindow);
+  _face.drawAllSprites(_mainWindow);
   _mineCountDisplay.drawAllSprites(_mainWindow);
   _timeDisplay.drawAllSprites(_mainWindow);
   _mainWindow.display();
@@ -217,9 +216,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
   
   if (_totalCells - _mines == _cellsRevealed) {
     // Winner!
-    _face._visibleState = Cell::FaceWin;
-    _face._trueState = Cell::FaceWin;
-    _face.updateDisplay();
+    _face.faceWin();
     rc += 2;  // we have a winner, leverage "show solution" case to reveal
   }
 
@@ -237,9 +234,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
   // Boom
   if (rc & 4) {
     _gameState = Game::Revealed;
-    _face._visibleState = Cell::FaceLoss;
-    _face._trueState = Cell::FaceLoss;    // need to keep in sync for Cell::click to work
-    _face.updateDisplay();
+    _face.faceLoss();
     for (int k = 0; k < _rows; k++) {
       for (int m = 0; m < _cols; m++) {
         _cells[k][m].reveal(false, false);
@@ -257,9 +252,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
       } 
     }
     
-    _face._visibleState = Cell::Face;
-    _face._trueState = Cell::Face;    // need to keep in sync for Cell::click to work
-    _face.updateDisplay();
+    _face.faceReset();
 
     _minesLeft = _mines;
     _mineCountDisplay.setNumber(_minesLeft);
@@ -366,7 +359,7 @@ void Game::initializeCells() {
     // allocate mines at random
     while (mineCount > 0) {
       if (std::rand() % cellsSize == 0 && _cells[i][j].isMine() != true) {
-        _cells[i][j]._trueState = Cell::Mine;
+        _cells[i][j].initMine();
         mineCount--;
       }
       if (i == _rows-1 && j == _cols-1) {
@@ -402,6 +395,5 @@ void Game::initializeCells() {
 int main(int argc, char** argv) {
   Game game;
   game.Start();
-  // probably should clean up resources that I have in a global/heap (but we'll let the OS clear them for now)
   return 0;
 }
