@@ -17,11 +17,7 @@ class Cell {
     bool isRevealed();
     void setPosition(int x, int y);
     void drawAllSprites(sf::RenderWindow& window);
-    void faceWin();
-    void faceLoss();
-    void faceReset();
     void initMine();
-    void initFace();
     void initShowSolution();
    
   private:
@@ -31,7 +27,7 @@ class Cell {
   private:
     sf::Sprite _sprite;
     int _number;
-    enum CellType {Default, Empty, Number, Flag, Question, Mine, MineClicked, MineMissed, ShowSolution, Face, FaceLoss, FaceWin};
+    enum CellType {Default, Empty, Number, Flag, Question, Mine, MineClicked, MineMissed, ShowSolution};
     CellType _trueState;
     CellType _visibleState;
 

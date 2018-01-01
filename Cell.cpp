@@ -32,8 +32,6 @@ int Cell::clicked() {
       default:
         break;
     }  
-  } else if (_visibleState == Cell::Face || _visibleState == Cell::FaceLoss || _visibleState == Cell::FaceWin) {
-      rc += 16; 
   }
   updateDisplay();
   return rc;
@@ -120,11 +118,6 @@ void Cell::initMine() {
   _trueState = Cell::Mine;
 }
 
-void Cell::initFace() {
-  _trueState = Cell::Face;
-  _visibleState = Cell::Face;
-}
-
 void Cell::initShowSolution() {
   _trueState = Cell::ShowSolution;
 }
@@ -132,24 +125,6 @@ void Cell::initShowSolution() {
 void Cell::drawAllSprites(sf::RenderWindow& window) {
   updateDisplay();
   window.draw(_sprite);
-}
-
-void Cell::faceWin() {
-  _visibleState = Cell::FaceWin;
-  _trueState = Cell::FaceWin;
-  updateDisplay();
-}
-
-void Cell::faceLoss() {
-  _visibleState = Cell::FaceLoss;
-  _trueState = Cell::FaceLoss;    // need to keep in sync for Cell::click to work
-  updateDisplay();
-}
-
-void Cell::faceReset() {
-  _visibleState = Cell::Face;
-  _trueState = Cell::Face;    // need to keep in sync for Cell::click to work
-  updateDisplay();
 }
 
 void Cell::updateDisplay() {
@@ -204,15 +179,6 @@ void Cell::updateDisplay() {
       break;
     case Cell::MineMissed:
       _sprite.setTexture(*getTexture("MineSweeperImages/MineMissedCell.png"));
-      break;
-    case Cell::Face:
-      _sprite.setTexture(*getTexture("MineSweeperImages/Smiley.png"));
-      break;
-    case Cell::FaceLoss:
-      _sprite.setTexture(*getTexture("MineSweeperImages/SmileyDead.png"));
-      break;
-    case Cell::FaceWin:
-      _sprite.setTexture(*getTexture("MineSweeperImages/SmileyGlasses.png"));
       break;
     default:
       _sprite.setTexture(*getTexture("MineSweeperImages/DefaultCell.png"));

@@ -16,11 +16,30 @@ Game::Game() {
   _mineCountDisplay.setNumber(_minesLeft);
   _mineCountDisplay.updateDisplay();
   _timeDisplay.setPosition(326.0,52.0);
+  _face.setPosition(182, 52);
+  _face.updateDisplay();
+  _showSolution.initShowSolution();
+  _showSolution.setPosition(360, 2);
+  _showSolution.updateDisplay();
 }
 
 Game::~Game() {
   // for (int i = 0; i < _rows; i++)
   //   delete _cells[i];
+}
+
+void Game::updateDifficulty(Game::Difficulty difficulty) {
+  _difficulty = difficulty;
+  if (_difficulty == Game::Beginner) {
+  
+  } else if (_difficulty == Game::Intermediate) {
+  
+  } else if (_difficulty == Game::Expert) {
+  
+  } else if (_difficulty == Game::Custom) {
+  
+  } 
+
 }
 
 void Game::initializeResources() {
@@ -67,16 +86,6 @@ void Game::Start()
     } 
   }
 
-  // Initialize reset button
-  _showSolution.initShowSolution();
-  _showSolution.setPosition(360, 2);
-  _showSolution.updateDisplay();
-
-  // Initialize the face
-  _face.initFace();
-  _face.setPosition(182, 52);
-  _face.updateDisplay();
-
   // Draw all sprites (OW game loop waits for an event to draw all)
   drawAllSprites();
 
@@ -108,6 +117,26 @@ bool Game::IsExiting()
     return false;
 }
 
+bool Game::isCellBeingClicked(sf::Vector2i position) {
+  if (position.x < 2)
+    return false;
+  if (position.x > 2 + (_cols * 40))
+    return false;
+  if (position.y < 100)
+    return false;
+  if (position.y > 100 + (_rows * 40))
+    return false;
+  return true;
+}
+
+int Game::getCellRowIndex(sf::Vector2i position) {
+  return (position.x - 2) / 40;
+}
+
+int Game::getCellColIndex(sf::Vector2i position) {
+  return (position.y - 100) / 40;
+}
+
 void Game::GameLoop()
 {
   // making sure timer works even without events (also gets updated with the rest of sprites)
@@ -126,18 +155,14 @@ void Game::GameLoop()
           if (currentEvent.type == sf::Event::MouseButtonReleased) {
             if (currentEvent.mouseButton.button == sf::Mouse::Left) {
             	sf::Vector2i position = sf::Mouse::getPosition(_mainWindow);
-            	std::cout << "Left: x = " << position.x << "\ty = " << position.y << "\n";
-              // find button that was clicked an update that sprite
-              int i = (position.x - 2) / 40;
-              int j = (position.y - 100) / 40;
-              // When you click in the 40 pixels above the top row, even you'll have -12/40 = 0 (for example)
-              if (position.y < 100)
-                j = -1;
-              if (validRowColIndex(i, j)) {
+            	// std::cout << "Left: x = " << position.x << "\ty = " << position.y << "\n";
+              if (isCellBeingClicked(position)) {
+                  int i = getCellRowIndex(position);
+                  int j = getCellColIndex(position);
                   handleReturnCode(_cells[i][j].clicked(), i, j);
               } else if (position.x >= 360 && position.x < 400 && position.y >= 2 && position.y <= 42) { 
                   handleReturnCode(_showSolution.clicked(), -1, -1);
-              } else if (position.x >= 182 && position.x < 222 && position.y >= 52 && position.y <= 92) {
+              } else if (_face.isBeingClicked(position)) {
                   handleReturnCode(_face.clicked(), -1, -1);
               }
     				}
@@ -146,10 +171,11 @@ void Game::GameLoop()
          		if (currentEvent.mouseButton.button == sf::Mouse::Right) {
             	sf::Vector2i position = sf::Mouse::getPosition(_mainWindow);
             	// std::cout << "Right: x = " << position.x << "\ty = " << position.y << "\n";
-              int i = (position.x - 2) / 40;
-              int j = (position.y - 100) / 40;
-              if (i < _rows && i >= 0 && j < _cols && j >= 0)
-                handleReturnCode(_cells[i][j].rightClicked(), i, j);
+              if (isCellBeingClicked(position)) {
+                  int i = getCellRowIndex(position);
+                  int j = getCellColIndex(position);
+                  handleReturnCode(_cells[i][j].rightClicked(), i, j);
+              }
     				} 
           }
           
@@ -159,7 +185,7 @@ void Game::GameLoop()
         if (currentEvent.type == sf::Event::MouseButtonReleased) {
           if (currentEvent.mouseButton.button == sf::Mouse::Left) {
           	sf::Vector2i position = sf::Mouse::getPosition(_mainWindow);
-            if (position.x >= 182 && position.x < 222 && position.y >= 52 && position.y <= 92)
+            if (_face.isBeingClicked(position))
               handleReturnCode(_face.clicked(), -1, -1);
     			}
         }
@@ -197,7 +223,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
   
   if (_totalCells - _mines == _cellsRevealed) {
     // Winner!
-    _face.faceWin();
+    _face.win();
     rc += 2;  // we have a winner, leverage "show solution" case to reveal
   }
 
@@ -215,7 +241,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
   // Boom
   if (rc & 4) {
     _gameState = Game::Revealed;
-    _face.faceLoss();
+    _face.loss();
     for (int k = 0; k < _rows; k++) {
       for (int m = 0; m < _cols; m++) {
         _cells[k][m].reveal(false, false);
@@ -233,7 +259,7 @@ void Game::handleReturnCode(int rc, int i, int j) {
       } 
     }
     
-    _face.faceReset();
+    _face.reset();
 
     _minesLeft = _mines;
     _mineCountDisplay.setNumber(_minesLeft);

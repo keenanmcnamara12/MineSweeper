@@ -16,6 +16,7 @@
 #include "Cell.h"
 #include "Score.h"
 #include "Textures.h"
+#include "Face.h"
 
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
@@ -30,6 +31,7 @@ class Game {
   
   public:
     enum GameState { Uninitialized, Playing, Revealed, Restarting, Exiting };
+    enum Difficulty {Beginner, Intermediate, Expert, Custom};
 	
 	private:
 	  bool IsExiting();
@@ -42,9 +44,14 @@ class Game {
     void clickNeighborEmptiesRecur(int** visited, int i, int j, int originI, int originJ);
     bool validRowColIndex(int i, int j);
     int isMineWrapper(int i, int j);
+    void updateDifficulty(Game::Difficulty difficulty);
+    bool isCellBeingClicked(sf::Vector2i position);
+    int getCellRowIndex(sf::Vector2i position);
+    int getCellColIndex(sf::Vector2i position);
 	 
   private:
 	  GameState _gameState;
+    Difficulty _difficulty;
 	  sf::RenderWindow _mainWindow;
     int _rows;
     int _cols;
@@ -54,7 +61,7 @@ class Game {
     int _minesLeft;
     Cell **_cells;
     Cell _showSolution;
-    Cell _face;
+    Face _face;
     Score _mineCountDisplay;
     Score _timeDisplay;
 };
