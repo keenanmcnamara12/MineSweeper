@@ -1,0 +1,7 @@
+﻿  Textures.cpp
+  Face.cpp
+c:\users\thor\documents\github\minesweeper\face.cpp(22): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  CellGrid.cpp
+c:\users\thor\documents\github\minesweeper\cellgrid.cpp(188): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+  Generating Code...
+  MineSweeper.vcxproj -> C:\Users\Thor\Documents\GitHub\MineSweeper\Debug\MineSweeper.exe
