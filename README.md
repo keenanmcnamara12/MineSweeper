@@ -19,3 +19,8 @@ The simplest way to run is downloading the full source code. You can delete most
 --MineSweeper.exe
 
 The exe can now be run since it'll have access to necessary images and font.
+
+# How it looks
+The odd hue was picked up from the screencap program because of flux running.
+
+![Example](https://github.com/keenanmcnamara12/MineSweeper/blob/master/Example.gif)
